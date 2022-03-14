@@ -72,7 +72,6 @@ class SignUpState extends State<SignUp> {
     } else {
       _saving = true;
       await Future.delayed(Duration(milliseconds: 500));
-      await _cameraService.cameraController.stopImageStream();
       await Future.delayed(Duration(milliseconds: 200));
       XFile file = await _cameraService.takePicture();
       imagePath = file.path;
@@ -96,15 +95,16 @@ class SignUpState extends State<SignUp> {
         _detectingFaces = true;
 
         try {
-          await _faceDetectorService.detectFacesFromImage(image);
+          await _faceDetectorService.detectFacesFromImage(image, context);
 
           if (_faceDetectorService.faces.isNotEmpty) {
             if (_saving) {
-              _mlService.setCurrentPrediction(image, faceDetected);
+              _mlService.setCurrentPrediction(image, _faceDetectorService.faces[0], context);
               setState(() {
                 _saving = false;
               });
             }
+            faceDetected = _faceDetectorService.faces[0];
           } else {
             setState(() {
               faceDetected = null;
@@ -170,15 +170,13 @@ class SignUpState extends State<SignUp> {
               fit: BoxFit.fitHeight,
               child: Container(
                 width: width,
-                height:
-                    width * _cameraService.cameraController.value.aspectRatio,
+                height: width * _cameraService.cameraController.value.aspectRatio,
                 child: Stack(
                   fit: StackFit.expand,
                   children: <Widget>[
                     CameraPreview(_cameraService.cameraController),
                     CustomPaint(
-                      painter:
-                          FacePainter(face: faceDetected, imageSize: imageSize),
+                      painter: FacePainter(face: faceDetected, imageSize: imageSize),
                     ),
                   ],
                 ),

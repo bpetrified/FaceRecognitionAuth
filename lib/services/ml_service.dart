@@ -5,12 +5,12 @@ import 'package:camera/camera.dart';
 import 'package:face_net_authentication/pages/db/databse_helper.dart';
 import 'package:face_net_authentication/pages/models/user.model.dart';
 import 'package:face_net_authentication/services/image_converter.dart';
+import 'package:flutter/material.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:image/image.dart' as imglib;
 
 class MLService {
-
   Interpreter _interpreter;
   double threshold = 0.5;
 
@@ -36,28 +36,39 @@ class MLService {
       }
       var interpreterOptions = InterpreterOptions()..addDelegate(delegate);
 
-      this._interpreter = await Interpreter.fromAsset('mobilefacenet.tflite',
-          options: interpreterOptions);
+      this._interpreter = await Interpreter.fromAsset('mobilefacenet.tflite', options: interpreterOptions);
+      print('interpret');
+      print(this._interpreter);
     } catch (e) {
       print('Failed to load model.');
       print(e);
     }
   }
 
-  void setCurrentPrediction(CameraImage cameraImage, Face face) {
-    List input = _preProcess(cameraImage, face);
+  void setCurrentPrediction(CameraImage cameraImage, Face face, BuildContext context) {
+    try {
+      List input = _preProcess(cameraImage, face);
 
-    input = input.reshape([1, 112, 112, 3]);
-    List output = List.generate(1, (index) => List.filled(192, 0));
+      input = input.reshape([1, 112, 112, 3]);
+      List output = List.generate(1, (index) => List.filled(192, 0));
 
-    this._interpreter.run(input, output);
-    output = output.reshape([192]);
+      this._interpreter.run(input, output);
+      output = output.reshape([192]);
 
-    this._predictedData = List.from(output);
+      this._predictedData = List.from(output);
+    } catch (e) {
+      const snackBar = SnackBar(
+        content: Text("error occur!!! in setCurrentPrediction"),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      print('yoyoyo');
+      print(e);
+    }
   }
 
-  Future<User> predict() async {
-    return _searchResult(this._predictedData);
+  Future<User> predict(BuildContext context) async {
+    return _searchResult(this._predictedData, context);
   }
 
   List _preProcess(CameraImage image, Face faceDetected) {
@@ -74,8 +85,7 @@ class MLService {
     double y = faceDetected.boundingBox.top - 10.0;
     double w = faceDetected.boundingBox.width + 10.0;
     double h = faceDetected.boundingBox.height + 10.0;
-    return imglib.copyCrop(
-        convertedImage, x.round(), y.round(), w.round(), h.round());
+    return imglib.copyCrop(convertedImage, x.round(), y.round(), w.round(), h.round());
   }
 
   imglib.Image _convertCameraImage(CameraImage image) {
@@ -100,22 +110,30 @@ class MLService {
     return convertedBytes.buffer.asFloat32List();
   }
 
-  Future<User> _searchResult(List predictedData) async {
-    DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  Future<User> _searchResult(List predictedData, BuildContext context) async {
+    try {
+      DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
-    List<User> users = await _dbHelper.queryAllUsers();
-    double minDist = 999;
-    double currDist = 0.0;
-    User predictedResult;
+      List<User> users = await _dbHelper.queryAllUsers();
+      double minDist = 999;
+      double currDist = 0.0;
+      User predictedResult;
 
-    for (User u in users) {
-      currDist = _euclideanDistance(u.modelData, predictedData);
-      if (currDist <= threshold && currDist < minDist) {
-        minDist = currDist;
-        predictedResult = u;
+      for (User u in users) {
+        currDist = _euclideanDistance(u.modelData, predictedData);
+        if (currDist <= threshold && currDist < minDist) {
+          minDist = currDist;
+          predictedResult = u;
+        }
       }
+      return predictedResult;
+    } catch (e) {
+      const snackBar = SnackBar(
+        content: Text("error occur!!! in search Result"),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
-    return predictedResult;
   }
 
   double _euclideanDistance(List e1, List e2) {
@@ -132,7 +150,5 @@ class MLService {
     this._predictedData = value;
   }
 
-  dispose() {
-    
-  }
+  dispose() {}
 }

@@ -36,9 +36,8 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() => loading = false);
   }
 
-  void _launchURL() async => await canLaunch(Constants.githubURL)
-      ? await launch(Constants.githubURL)
-      : throw 'Could not launch ${Constants.githubURL}';
+  void _launchURL() async =>
+      await canLaunch(Constants.githubURL) ? await launch(Constants.githubURL) : throw 'Could not launch ${Constants.githubURL}';
 
   @override
   Widget build(BuildContext context) {
@@ -88,8 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         children: [
                           Text(
                             "FACE RECOGNITION AUTHENTICATION",
-                            style: TextStyle(
-                                fontSize: 25, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                           SizedBox(
@@ -129,8 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               ],
                             ),
                             alignment: Alignment.center,
-                            padding: EdgeInsets.symmetric(
-                                vertical: 14, horizontal: 16),
+                            padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                             width: MediaQuery.of(context).size.width * 0.8,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -172,8 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               ],
                             ),
                             alignment: Alignment.center,
-                            padding: EdgeInsets.symmetric(
-                                vertical: 14, horizontal: 16),
+                            padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                             width: MediaQuery.of(context).size.width * 0.8,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -212,8 +208,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               ],
                             ),
                             alignment: Alignment.center,
-                            padding: EdgeInsets.symmetric(
-                                vertical: 14, horizontal: 16),
+                            padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                             width: MediaQuery.of(context).size.width * 0.8,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,

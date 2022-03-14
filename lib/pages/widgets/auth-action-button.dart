@@ -10,8 +10,7 @@ import '../home.dart';
 import 'app_text_field.dart';
 
 class AuthActionButton extends StatefulWidget {
-  AuthActionButton(
-      {Key key, @required this.onPressed, @required this.isLogin, this.reload});
+  AuthActionButton({Key key, @required this.onPressed, @required this.isLogin, this.reload});
   final Function onPressed;
   final bool isLogin;
   final Function reload;
@@ -23,27 +22,33 @@ class _AuthActionButtonState extends State<AuthActionButton> {
   final MLService _mlService = locator<MLService>();
   final CameraService _cameraService = locator<CameraService>();
 
-  final TextEditingController _userTextEditingController =
-      TextEditingController(text: '');
-  final TextEditingController _passwordTextEditingController =
-      TextEditingController(text: '');
+  final TextEditingController _userTextEditingController = TextEditingController(text: '');
+  final TextEditingController _passwordTextEditingController = TextEditingController(text: '');
 
   User predictedUser;
 
   Future _signUp(context) async {
-    DatabaseHelper _databaseHelper = DatabaseHelper.instance;
-    List predictedData = _mlService.predictedData;
-    String user = _userTextEditingController.text;
-    String password = _passwordTextEditingController.text;
-    User userToSave = User(
-      user: user,
-      password: password,
-      modelData: predictedData,
-    );
-    await _databaseHelper.insert(userToSave);
-    this._mlService.setPredictedData(null);
-    Navigator.push(context,
-        MaterialPageRoute(builder: (BuildContext context) => MyHomePage()));
+    try {
+      DatabaseHelper _databaseHelper = DatabaseHelper.instance;
+      List predictedData = _mlService.predictedData;
+
+      String user = _userTextEditingController.text;
+      String password = _passwordTextEditingController.text;
+      User userToSave = User(
+        user: user,
+        password: password,
+        modelData: predictedData,
+      );
+      await _databaseHelper.insert(userToSave);
+      this._mlService.setPredictedData(null);
+      Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => MyHomePage()));
+    } catch (e) {
+      const snackBar = SnackBar(
+        content: Text("error occur!!! in _signUp"),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    }
   }
 
   Future _signIn(context) async {
@@ -69,7 +74,7 @@ class _AuthActionButtonState extends State<AuthActionButton> {
   }
 
   Future<User> _predictUser() async {
-    User userAndPass = await _mlService.predict();
+    User userAndPass = await _mlService.predict(context);
     return userAndPass ?? null;
   }
 
@@ -83,9 +88,7 @@ class _AuthActionButtonState extends State<AuthActionButton> {
             this.predictedUser = user;
           }
         }
-        PersistentBottomSheetController bottomSheetController =
-            Scaffold.of(context)
-                .showBottomSheet((context) => signSheet(context));
+        PersistentBottomSheetController bottomSheetController = Scaffold.of(context).showBottomSheet((context) => signSheet(context));
         bottomSheetController.closed.whenComplete(() => widget.reload());
       }
     } catch (e) {

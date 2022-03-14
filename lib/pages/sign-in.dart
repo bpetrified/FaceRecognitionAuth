@@ -61,9 +61,9 @@ class SignInState extends State<SignIn> {
   }
 
   Future<void> _predictFacesFromImage({@required CameraImage image}) async {
-    await _faceDetectorService.detectFacesFromImage(image);
+    await _faceDetectorService.detectFacesFromImage(image, context);
     if (_faceDetectorService.faceDetected) {
-      _mlService.setCurrentPrediction(image, _faceDetectorService.faces[0]);
+      _mlService.setCurrentPrediction(image, _faceDetectorService.faces[0], context);
     }
     if (mounted) setState(() {});
   }
@@ -73,10 +73,7 @@ class SignInState extends State<SignIn> {
       await _cameraService.takePicture();
       setState(() => _isPictureTaken = true);
     } else {
-      showDialog(
-          context: context,
-          builder: (context) =>
-              AlertDialog(content: Text('No face detected!')));
+      showDialog(context: context, builder: (context) => AlertDialog(content: Text('No face detected!')));
     }
   }
 
@@ -92,17 +89,15 @@ class SignInState extends State<SignIn> {
   Future<void> onTap() async {
     await takePicture();
     if (_faceDetectorService.faceDetected) {
-      User user = await _mlService.predict();
-      var bottomSheetController = scaffoldKey.currentState
-          .showBottomSheet((context) => signInSheet(user: user));
+      User user = await _mlService.predict(context);
+      var bottomSheetController = scaffoldKey.currentState.showBottomSheet((context) => signInSheet(user: user));
       bottomSheetController.closed.whenComplete(_reload);
     }
   }
 
   Widget getBodyWidget() {
     if (_isInitializing) return Center(child: CircularProgressIndicator());
-    if (_isPictureTaken)
-      return SinglePicture(imagePath: _cameraService.imagePath);
+    if (_isPictureTaken) return SinglePicture(imagePath: _cameraService.imagePath);
     return CameraDetectionPreview();
   }
 
