@@ -16,9 +16,7 @@ class FaceDetectorService {
 
   void initialize() {
     _faceDetector = GoogleMlKit.vision.faceDetector(
-      FaceDetectorOptions(
-        mode: FaceDetectorMode.accurate,
-      ),
+      FaceDetectorOptions(mode: FaceDetectorMode.accurate, enableClassification: true, enableLandmarks: true),
     );
   }
 
@@ -48,6 +46,38 @@ class FaceDetectorService {
     } catch (e) {
       const snackBar = SnackBar(
         content: Text("error occur!!! in detectFacesFromImage"),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    }
+  }
+
+  Future<List<Face>> getFacesFromImage(CameraImage image, BuildContext context) async {
+    try {
+      InputImageData _firebaseImageMetadata = InputImageData(
+        imageRotation: _cameraService.cameraRotation,
+        inputImageFormat: InputImageFormatMethods.fromRawValue(image.format.raw),
+        size: Size(image.width.toDouble(), image.height.toDouble()),
+        planeData: image.planes.map(
+          (Plane plane) {
+            return InputImagePlaneMetadata(
+              bytesPerRow: plane.bytesPerRow,
+              height: plane.height,
+              width: plane.width,
+            );
+          },
+        ).toList(),
+      );
+
+      InputImage _firebaseVisionImage = InputImage.fromBytes(
+        bytes: image.planes[0].bytes,
+        inputImageData: _firebaseImageMetadata,
+      );
+
+      return _faces = await _faceDetector.processImage(_firebaseVisionImage);
+    } catch (e) {
+      const snackBar = SnackBar(
+        content: Text("error occur!!! in getFacesFromImage"),
       );
 
       ScaffoldMessenger.of(context).showSnackBar(snackBar);

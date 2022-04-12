@@ -1,6 +1,7 @@
 import 'package:face_net_authentication/constants/constants.dart';
 import 'package:face_net_authentication/locator.dart';
 import 'package:face_net_authentication/pages/db/databse_helper.dart';
+import 'package:face_net_authentication/pages/face-classification.dart';
 import 'package:face_net_authentication/pages/sign-in.dart';
 import 'package:face_net_authentication/pages/sign-up.dart';
 import 'package:face_net_authentication/services/camera.service.dart';
@@ -110,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (BuildContext context) => SignIn(),
+                                builder: (BuildContext context) => FaceClassification(),
                               ),
                             );
                           },

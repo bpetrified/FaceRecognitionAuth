@@ -62,8 +62,6 @@ class MLService {
       );
 
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      print('yoyoyo');
-      print(e);
     }
   }
 

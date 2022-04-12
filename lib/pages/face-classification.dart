@@ -11,25 +11,26 @@ import 'package:face_net_authentication/services/ml_service.dart';
 import 'package:face_net_authentication/services/face_detector_service.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 
-class SignIn extends StatefulWidget {
-  const SignIn({Key key}) : super(key: key);
+class FaceClassification extends StatefulWidget {
+  const FaceClassification({Key key}) : super(key: key);
 
   @override
-  SignInState createState() => SignInState();
+  FaceClassificationState createState() => FaceClassificationState();
 }
 
-class SignInState extends State<SignIn> {
+class FaceClassificationState extends State<FaceClassification> {
   CameraService _cameraService = locator<CameraService>();
   FaceDetectorService _faceDetectorService = locator<FaceDetectorService>();
-  MLService _mlService = locator<MLService>();
 
   GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-  bool _isPictureTaken = false;
   bool _isInitializing = false;
-  bool userFound = false;
-  String status = "";
+  bool _isPictureTaken = false;
+  String smileyProb = "";
+  String eulerY = "";
+  String eulerZ = "";
 
   @override
   void initState() {
@@ -40,7 +41,6 @@ class SignInState extends State<SignIn> {
   @override
   void dispose() {
     _cameraService.dispose();
-    _mlService.dispose();
     _faceDetectorService.dispose();
     super.dispose();
   }
@@ -55,7 +55,7 @@ class SignInState extends State<SignIn> {
   _frameFaces() async {
     bool processing = false;
     _cameraService.cameraController.startImageStream((CameraImage image) async {
-      if (processing || userFound) return; // prevents unnecessary overprocessing.
+      if (processing) return; // prevents unnecessary overprocessing.
       processing = true;
       await _predictFacesFromImage(image: image);
       processing = false;
@@ -63,15 +63,16 @@ class SignInState extends State<SignIn> {
   }
 
   Future<void> _predictFacesFromImage({@required CameraImage image}) async {
-    await _faceDetectorService.detectFacesFromImage(image, context);
-    if (_faceDetectorService.faceDetected) {
-      _mlService.setCurrentPrediction(image, _faceDetectorService.faces[0], context);
-      User user = await _mlService.predict(context);
-      if (user != null) {
-        userFound = true;
-        await _cameraService.takePicture();
-        var bottomSheetController = scaffoldKey.currentState.showBottomSheet((context) => signInSheet(user: user));
-        bottomSheetController.closed.whenComplete(_reload);
+    List<Face> faces = await _faceDetectorService.getFacesFromImage(image, context);
+    if (faces != null && faces.length > 0) {
+      Face face = faces[0];
+      if (faces[0].smilingProbability != null) {
+        final double smileProb = face.smilingProbability;
+        setState(() {
+          smileyProb = smileProb.toString();
+          eulerY = face.headEulerAngleY.toString();
+          eulerZ = face.headEulerAngleZ.toString();
+        });
       }
     }
     if (mounted) setState(() {});
@@ -96,12 +97,12 @@ class SignInState extends State<SignIn> {
   }
 
   Future<void> onTap() async {
-    await takePicture();
-    if (_faceDetectorService.faceDetected) {
-      User user = await _mlService.predict(context);
-      var bottomSheetController = scaffoldKey.currentState.showBottomSheet((context) => signInSheet(user: user));
-      bottomSheetController.closed.whenComplete(_reload);
-    }
+    // await takePicture();
+    // if (_faceDetectorService.faceDetected) {
+    //   User user = await _mlService.predict(context);
+    //   var bottomSheetController = scaffoldKey.currentState.showBottomSheet((context) => signInSheet(user: user));
+    //   bottomSheetController.closed.whenComplete(_reload);
+    // }
   }
 
   Widget getBodyWidget() {
@@ -123,10 +124,23 @@ class SignInState extends State<SignIn> {
         children: [
           body,
           header,
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(color: Colors.white, child: Text(status)),
+          Column(
+            children: [
+              Expanded(child: Container()),
+              Container(
+                color: Colors.white,
+                padding: EdgeInsets.all(20.0),
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text(smileyProb), Text(eulerY), Text(eulerZ)]),
+              )
+            ],
           )
+          // Align(
+          //     alignment: Alignment.bottomCenter,
+          //     child: Container(
+          //       color: Colors.white,
+          //       padding: EdgeInsets.all(20.0),
+          //       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text(smileyProb)]),
+          //     ))
         ],
       ),
       // floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
